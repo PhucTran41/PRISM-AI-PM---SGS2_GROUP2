@@ -37,7 +37,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 text-black">
       {/* Header */}
       <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-4">
         <div className="flex items-center gap-3">

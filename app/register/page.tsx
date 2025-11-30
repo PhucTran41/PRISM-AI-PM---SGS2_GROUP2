@@ -54,10 +54,12 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold">PRISM</span>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white">PRISM</span>
+          </Link>
         </div>
 
         <Card className="w-full">
