@@ -1,19 +1,27 @@
-import { apiRequest } from "./api";
 import {
   CreateUserInput,
   FinalizeSignUpInput,
   UserLoginInput,
 } from "@/services/auth/types";
+import { apiRequest } from "./api";
+
+function internalRequest(
+  path: string,
+  options: RequestInit = {},
+  token?: string
+) {
+  return apiRequest(path, options, token, { internal: true });
+}
 
 export async function checkUsername(username: string) {
-  return apiRequest("/api/users/check-username", {
+  return internalRequest("/api/users/check-username", {
     method: "POST",
     body: JSON.stringify({ username }),
   });
 }
 
 export async function initiateSignup(data: CreateUserInput) {
-  return apiRequest("/api/users/initiate-signup", {
+  return internalRequest("/api/users/initiate-signup", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -24,33 +32,33 @@ export async function verifyEmailCode(
   code: string,
   type: string
 ) {
-  return apiRequest("/api/users/email-verify-verification", {
+  return internalRequest("/api/users/email-verify-verification", {
     method: "POST",
     body: JSON.stringify({ email, code, type }),
   });
 }
 
 export async function sendEmailVerificationCode(email: string) {
-  return apiRequest("/api/users/email-verification-code", {
+  return internalRequest("/api/users/email-verification-code", {
     method: "POST",
     body: JSON.stringify({ email }),
   });
 }
 
 export async function finalizeSignup(data: FinalizeSignUpInput) {
-  return apiRequest("/api/users/finalize-signup", {
+  return internalRequest("/api/users/finalize-signup", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function login(data: UserLoginInput) {
-  return apiRequest("/api/users/login", {
+  return internalRequest("/api/users/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getUserProfile(token: string) {
-  return apiRequest("/api/users/profile", { method: "GET" }, token);
+  return internalRequest("/api/users/profile", { method: "GET" }, token);
 }
