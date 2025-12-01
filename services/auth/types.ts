@@ -1,3 +1,4 @@
+// services/auth/types.ts
 export interface CheckUsernameAvailability {
   username: string;
 }
