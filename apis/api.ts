@@ -11,10 +11,15 @@ export class ApiError extends Error {
   }
 }
 
+interface ApiRequestConfig {
+  internal?: boolean;
+}
+
 export async function apiRequest(
   path: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
+  config: ApiRequestConfig = {}
 ) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -22,8 +27,8 @@ export async function apiRequest(
   };
 
   try {
-    const res = await fetch(`${apiBasePath}${path}`, { ...options, headers });
-
+    const baseUrl = config.internal ? "" : `${apiBasePath}`;
+    const res = await fetch(`${baseUrl}${path}`, { ...options, headers });
     if (!res.ok) {
       let errorData: unknown = {};
 
@@ -35,7 +40,6 @@ export async function apiRequest(
 
       throw new ApiError(res.status, errorData);
     }
-
     return res.json();
   } catch (error) {
     // If it's already an ApiError, throw it as is
