@@ -15,37 +15,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import { useLogin } from "@/hooks/mutations/auth/useLogin";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); // Changed from 'email' to 'identifier'
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { handleLogin, loading, error } = useLogin();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const demoAccounts = [
-      { email: "john@test.com", password: "password123" },
-      { email: "jane@test.com", password: "password123" },
-      { email: "demo@test.com", password: "demo" },
-    ];
-
-    const user = demoAccounts.find(
-      (account) => account.email === email && account.password === password
-    );
-
-    if (user) {
-      localStorage.setItem("mockUser", JSON.stringify({ email: user.email }));
+    try {
+      // UserLoginInput expects { identifier, password }
+      await handleLogin({
+        identifier, // Can be email or username
+        password,
+      });
+      // On success, the useLogin hook sets the cookie and user context
       router.push("/dashboard");
-    } else {
-      setError("Invalid email or password");
-      setIsLoading(false);
+    } catch (err) {
+      // Error is handled by the useLogin hook
+      console.error("Login failed:", err);
     }
   };
 
@@ -71,13 +62,6 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-3 text-sm bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg">
-              <p className="font-semibold mb-1">Demo Accounts:</p>
-              <p className="text-xs">• john@test.com / password123</p>
-              <p className="text-xs">• jane@test.com / password123</p>
-              <p className="text-xs">• demo@test.com / demo</p>
-            </div>
-
             {error && (
               <div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">
                 {error}
@@ -86,15 +70,15 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email or Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier"
+                  type="text"
+                  placeholder="name@example.com or username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -114,11 +98,11 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Login"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Login"}
               </Button>
             </form>
           </CardContent>
@@ -134,10 +118,6 @@ export default function LoginPage() {
             </p>
           </CardFooter>
         </Card>
-
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          ⚠️ Using mock authentication
-        </p>
       </div>
     </div>
   );

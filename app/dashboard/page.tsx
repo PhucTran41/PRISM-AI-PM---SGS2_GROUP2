@@ -1,8 +1,18 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Settings, Bell, HelpCircle, LogOut } from "lucide-react";
+import Link from "next/link";
+import {
+  Sparkles,
+  Settings,
+  Bell,
+  HelpCircle,
+  LogOut,
+  Plus,
+  FileText,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -54,6 +64,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* New Project Button */}
+          <Link
+            href="/dashboard/new-project"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">New Project</span>
+          </Link>
+
           {/* Show logged in user */}
           <span className="text-sm text-gray-600 hidden sm:inline">
             {user.name || user.email}
@@ -224,6 +243,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-// Import FileText icon at the top with other icons
-import { FileText } from "lucide-react";
