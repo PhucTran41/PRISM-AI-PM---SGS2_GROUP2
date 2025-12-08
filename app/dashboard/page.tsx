@@ -1,7 +1,7 @@
 // app/dashboard/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,35 +13,31 @@ import {
   Plus,
   FileText,
 } from "lucide-react";
+import { useUser } from "@/context/userContext";
+import Cookies from "js-cookie";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useUser();
 
   // Check if user is logged in
   useEffect(() => {
-    const mockUser = localStorage.getItem("mockUser");
-
-    if (!mockUser) {
+    if (!loading && !user) {
       // Not logged in, redirect to login
       router.push("/login");
-      return;
     }
-
-    // Set user data
-    setUser(JSON.parse(mockUser));
-  }, [router]);
+  }, [user, loading, router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("mockUser");
+    Cookies.remove("auth-token");
     router.push("/login");
   };
 
   // Show loading while checking auth
-  if (!user) {
+  if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
@@ -75,7 +71,7 @@ export default function DashboardPage() {
 
           {/* Show logged in user */}
           <span className="text-sm text-gray-600 hidden sm:inline">
-            {user.name || user.email}
+            {user.displayName || user.username}
           </span>
 
           <div className="flex items-center gap-1">

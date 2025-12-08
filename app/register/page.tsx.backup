@@ -15,79 +15,40 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
-import { useFinalizeSignup } from "@/hooks/mutations/auth/useFinalizeSignup";
-import { useLogin } from "@/hooks/mutations/auth/useLogin";
 
 export default function RegisterPage() {
   const router = useRouter();
-
-  // Form data
   const [formData, setFormData] = useState({
-    username: "",
-    displayName: "",
+    name: "",
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Local errors
-  const [localError, setLocalError] = useState("");
-
-  // Hooks
-  const {
-    handleFinalizeSignup,
-    loading: finalizing,
-    error: finalizeError,
-  } = useFinalizeSignup();
-  const { handleLogin, loading: loggingIn } = useLogin();
-
-  // Handle registration
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLocalError("");
+    setError("");
+    setIsLoading(true);
 
-    // Basic validation
-    if (formData.password.length < 9) {
-      setLocalError(
-        "Password must be at least 9 characters with 1 uppercase, 1 number, and 1 special character"
-      );
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setIsLoading(false);
       return;
     }
 
-    if (formData.username.length < 3) {
-      setLocalError("Username must be at least 3 characters");
-      return;
-    }
-
-    if (!formData.displayName.trim()) {
-      setLocalError("Display name is required");
-      return;
-    }
-
-    try {
-      // Create account directly (no email verification)
-      await handleFinalizeSignup({
+    localStorage.setItem(
+      "mockUser",
+      JSON.stringify({
+        name: formData.name,
         email: formData.email,
-        displayName: formData.displayName,
-        username: formData.username,
-        password: formData.password,
-        // No code needed
-      });
+      })
+    );
 
-      // Auto-login after successful registration
-      await handleLogin({
-        identifier: formData.email,
-        password: formData.password,
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Registration/login failed:", err);
-    }
+    router.push("/dashboard");
   };
-
-  const currentError = localError || finalizeError;
-  const isLoading = finalizing || loggingIn;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -111,48 +72,34 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Error display */}
-            {currentError && (
+            <div className="p-3 text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg">
+              <p className="font-semibold mb-1">📝 Mock Registration</p>
+              <p className="text-xs">
+                This is a demo - no data is saved to a server
+              </p>
+            </div>
+
+            {error && (
               <div className="p-3 text-sm bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">
-                {currentError}
+                {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="johndoe"
-                  value={formData.username}
-                  onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
-                  }
-                  required
-                  disabled={isLoading}
-                  minLength={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  3-50 characters, letters, numbers, dots, underscores
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                  id="displayName"
+                  id="name"
                   type="text"
                   placeholder="John Doe"
-                  value={formData.displayName}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, displayName: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   required
                   disabled={isLoading}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -166,37 +113,24 @@ export default function RegisterPage() {
                   required
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Can be a fake email for demo purposes
-                </p>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder="Create a strong password (min. 6 characters)"
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
                   required
                   disabled={isLoading}
-                  minLength={9}
+                  minLength={6}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Min 9 characters, 1 uppercase, 1 number, 1 special char
-                  (!@#$%^&*)
-                </p>
               </div>
-
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {finalizing
-                  ? "Creating account..."
-                  : loggingIn
-                  ? "Logging in..."
-                  : "Sign Up"}
+                {isLoading ? "Creating account..." : "Sign Up"}
               </Button>
             </form>
           </CardContent>
@@ -212,6 +146,10 @@ export default function RegisterPage() {
             </p>
           </CardFooter>
         </Card>
+
+        <p className="text-center text-xs text-muted-foreground mt-4">
+          ⚠️ Using mock authentication
+        </p>
       </div>
     </div>
   );

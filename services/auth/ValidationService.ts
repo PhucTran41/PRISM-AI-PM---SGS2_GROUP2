@@ -31,17 +31,8 @@ export class ValidationService {
         z
           .string()
           .max(255, "Email must not exceed 255 characters")
-          .email("Email must be a valid Gmail address (e.g., user@gmail.com)")
-          .refine(
-            (val: string) => val.endsWith("@gmail.com"),
-            "Email must be a valid Gmail address (e.g., user@gmail.com)"
-          )
-          .refine(
-            (val: string) => /^[a-zA-Z0-9@.]+$/.test(val),
-            "Email can only contain letters, numbers, @, and ."
-          )
+          .email("Email must be a valid email address")
       );
-
     const result = schema.safeParse(email);
     if (!result.success) {
       const msg = result.error.issues[0].message;
