@@ -14,14 +14,14 @@ function internalRequest(
 }
 
 export async function checkUsername(username: string) {
-  return internalRequest("/api/users/check-username", {
+  return internalRequest("/api/auth/check-username", {
     method: "POST",
     body: JSON.stringify({ username }),
   });
 }
 
 export async function initiateSignup(data: CreateUserInput) {
-  return internalRequest("/api/users/initiate-signup", {
+  return internalRequest("/api/auth/initiate-signup", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -32,33 +32,33 @@ export async function verifyEmailCode(
   code: string,
   type: string
 ) {
-  return internalRequest("/api/users/email-verify-verification", {
+  return internalRequest("/api/auth/email-verify-verification", {
     method: "POST",
     body: JSON.stringify({ email, code, type }),
   });
 }
 
 export async function sendEmailVerificationCode(email: string) {
-  return internalRequest("/api/users/email-verification-code", {
+  return internalRequest("/api/auth/email-verification-code", {
     method: "POST",
     body: JSON.stringify({ email }),
   });
 }
 
 export async function finalizeSignup(data: FinalizeSignUpInput) {
-  return internalRequest("/api/users/finalize-signup", {
+  return internalRequest("/api/auth/finalize-signup", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function login(data: UserLoginInput) {
-  return internalRequest("/api/users/login", {
+  return internalRequest("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getUserProfile(token: string) {
-  return internalRequest("/api/users/profile", { method: "GET" }, token);
+  return internalRequest("/api/auth/profile", { method: "GET" }, token);
 }

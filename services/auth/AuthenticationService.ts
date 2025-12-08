@@ -89,7 +89,6 @@ export class AuthenticationService {
     data: CheckUsernameAvailability
   ): Promise<boolean> {
     const cleanUsername = this.validationService.validateName(data.username);
-
     const existingUser = await prisma.user.findFirst({
       where: {
         username: {
