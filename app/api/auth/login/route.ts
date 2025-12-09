@@ -11,6 +11,8 @@ const bodySchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = bodySchema.parse(await request.json());
+    console.log("body: ", body);
+
     const { token, data } = await authenticationService.login(
       body.identifier,
       body.password,

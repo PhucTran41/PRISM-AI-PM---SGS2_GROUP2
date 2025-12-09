@@ -1,3 +1,5 @@
+"use client";
+
 import { UploadState } from "./types";
 
 const DB_NAME = "r2_uploads";

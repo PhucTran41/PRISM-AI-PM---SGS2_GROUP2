@@ -5,7 +5,6 @@ import { userManagementService } from "@/services/auth";
 export async function GET(request: NextRequest) {
   try {
     const { payload } = requireAuth(request);
-    console.log(payload);
     const user = await userManagementService.getUserById(payload.id);
 
     return NextResponse.json({ user }, { status: 200 });

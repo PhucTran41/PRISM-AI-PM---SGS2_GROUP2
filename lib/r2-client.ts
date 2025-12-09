@@ -1,9 +1,8 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
-// Initialize R2 Client (S3-compatible)
 export const r2Client = new S3Client({
   region: "auto",
-  endpoint: process.env.R2_ENDPOINT, // https://[account-id].r2.cloudflarestorage.com
+  endpoint: process.env.R2_ENDPOINT,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
@@ -14,7 +13,7 @@ export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 
 // Validation config
 export const UPLOAD_VALIDATION = {
-  maxFileSize: 5 * 1024 * 1024 * 1024, // 5GB
+  maxFileSize: 1 * 1024 * 1024 * 1024, // 1GB
   allowedMimeTypes: [
     "image/jpeg",
     "image/png",

@@ -1,3 +1,4 @@
+// lib/hybrid-upload-manager.ts
 import {
   UploadState,
   UploadProgress,
@@ -6,13 +7,14 @@ import {
   CreateMultipartResponse,
   PresignedUrlResponse,
   CompleteMultipartResponse,
-} from "../services/upload/types";
-import { uploadDB } from "../services/upload/indexeddb";
+} from "@/services/upload/types";
+import { uploadDB } from "@/services/upload/indexeddb";
+import { hybridFileAccessManager } from "./file-access-manager";
 
 type ProgressCallback = (progress: UploadProgress) => void;
 type StateChangeCallback = (state: UploadState) => void;
 
-export class UploadManager {
+export class HybridUploadManager {
   private activeUploads = new Map<string, AbortController>();
   private uploadQueue: string[] = [];
   private activeCount = 0;
@@ -23,33 +25,56 @@ export class UploadManager {
     string,
     { bytes: number; timestamp: number }[]
   >();
+  private initialized = false;
 
-  constructor() {
-    this.init();
-  }
+  async init() {
+    if (this.initialized) return;
 
-  private async init() {
     await uploadDB.init();
+    await hybridFileAccessManager.init();
+
     // Resume incomplete uploads on initialization
     await this.resumeIncompleteUploads();
+
+    this.initialized = true;
+    console.log("Hybrid Upload Manager initialized");
   }
 
   private async resumeIncompleteUploads() {
     const incompleteUploads = await uploadDB.getIncompleteUploads();
 
+    console.log(`Found ${incompleteUploads.length} incomplete uploads`);
+
     for (const state of incompleteUploads) {
-      if (state.status === "uploading") {
-        // Mark as paused and add to queue
-        state.status = "paused";
-        await uploadDB.saveUploadState(state);
+      // Mark as paused (will be queued when file is available)
+      state.status = "paused";
+      await uploadDB.saveUploadState(state);
+
+      // Try to get file without prompting yet
+      const file = await hybridFileAccessManager.getFile(state, false);
+
+      if (file) {
+        // File is available! Queue for upload
+        console.log(`File available for resumed upload: ${state.file.name}`);
+        this.uploadQueue.push(state.id);
+      } else {
+        // File not available yet, will need user to provide it
+        console.log(
+          `File not available for: ${state.file.name} (will prompt when needed)`
+        );
       }
-      this.uploadQueue.push(state.id);
     }
 
-    this.processQueue();
+    if (this.uploadQueue.length > 0) {
+      this.processQueue();
+    }
   }
 
   async addFiles(files: File[]): Promise<string[]> {
+    if (!this.initialized) {
+      await this.init();
+    }
+
     const uploadIds: string[] = [];
 
     for (const file of files) {
@@ -64,10 +89,14 @@ export class UploadManager {
       }
 
       const id = this.generateUploadId();
+
+      // Store file using hybrid approach
+      await hybridFileAccessManager.storeFile(id, file);
+
       const state: UploadState = {
         id,
         file: {
-          name: this.sanitizeFileName(file.name),
+          name: file.name,
           size: file.size,
           type: file.type,
           lastModified: file.lastModified,
@@ -152,13 +181,17 @@ export class UploadManager {
       const abortController = new AbortController();
       this.activeUploads.set(state.id, abortController);
 
-      // Get original file (this is a limitation - in production, you'd need to handle this differently)
-      // For resume after refresh, you'd need to prompt user to select the same file
-
       state.status = "starting";
       state.updatedAt = Date.now();
       await uploadDB.saveUploadState(state);
       this.emitStateChange(state);
+
+      // Get file using hybrid approach (may prompt user if needed)
+      const file = await hybridFileAccessManager.getFile(state, true);
+
+      if (!file) {
+        throw new Error("File not available");
+      }
 
       // Create multipart upload if not exists
       if (!state.uploadId) {
@@ -177,7 +210,7 @@ export class UploadManager {
       this.emitStateChange(state);
 
       // Upload remaining chunks
-      await this.uploadChunks(state, abortController.signal);
+      await this.uploadChunks(state, file, abortController.signal);
 
       // Complete multipart upload
       await this.completeUpload(state);
@@ -191,7 +224,10 @@ export class UploadManager {
       this.chunkProgress.delete(state.id);
       this.speedTracking.delete(state.id);
 
-      // Clean up after a delay
+      // Clean up file from all storage
+      hybridFileAccessManager.cleanupFile(state.id);
+
+      // Clean up from database after a delay
       setTimeout(() => {
         uploadDB.deleteUploadState(state.id);
       }, 5000);
@@ -251,6 +287,9 @@ export class UploadManager {
         state.nextChunkIndex = remoteParts.length;
 
         await uploadDB.saveUploadState(state);
+        console.log(
+          `Synced with R2: ${remoteParts.length} parts already uploaded`
+        );
       }
     } catch (error) {
       console.warn(
@@ -260,14 +299,11 @@ export class UploadManager {
     }
   }
 
-  private async uploadChunks(state: UploadState, signal: AbortSignal) {
-    // This is a simplified version - you need to get the actual File object
-    // In practice, you'd store a reference or prompt user to select it again after refresh
-    const file = await this.getFileForUpload(state);
-    if (!file) {
-      throw new Error("File not available for upload");
-    }
-
+  private async uploadChunks(
+    state: UploadState,
+    file: File,
+    signal: AbortSignal
+  ) {
     const totalChunks = Math.ceil(state.file.size / state.chunkSize);
     const chunkPromises: Promise<void>[] = [];
     let activeChunks = 0;
@@ -289,17 +325,6 @@ export class UploadManager {
     }
 
     await Promise.all(chunkPromises);
-  }
-
-  private async getFileForUpload(state: UploadState): Promise<File | null> {
-    // This is a placeholder - in production, you need a strategy to get the File object
-    // Options:
-    // 1. Keep File objects in memory (limited by browser memory)
-    // 2. Prompt user to re-select file after refresh
-    // 3. Use FileSystem Access API to maintain handles
-
-    // For now, return null and handle in real implementation
-    return null;
   }
 
   private async uploadChunk(
@@ -367,6 +392,9 @@ export class UploadManager {
 
         // Exponential backoff
         const delay = UPLOAD_CONFIG.baseRetryDelay * Math.pow(2, retries - 1);
+        console.log(
+          `Retrying chunk ${partNumber} after ${delay}ms (attempt ${retries})`
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -512,6 +540,7 @@ export class UploadManager {
     await uploadDB.deleteUploadState(uploadId);
     this.chunkProgress.delete(uploadId);
     this.speedTracking.delete(uploadId);
+    hybridFileAccessManager.cleanupFile(uploadId);
   }
 
   onProgress(uploadId: string, callback: ProgressCallback): () => void {
@@ -597,6 +626,14 @@ export class UploadManager {
       callback(state);
     }
   }
+
+  getStats() {
+    return {
+      activeUploads: this.activeUploads.size,
+      queuedUploads: this.uploadQueue.length,
+      ...hybridFileAccessManager.getStats(),
+    };
+  }
 }
 
-export const uploadManager = new UploadManager();
+export const hybridUploadManager = new HybridUploadManager();

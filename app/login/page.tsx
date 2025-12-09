@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Sparkles, Eye, EyeOff } from "lucide-react";
 import { useLogin } from "@/hooks/mutations/auth/useLogin";
-import Aurora from "@/components/Aurora";
-import FileUploader from "@/components/FIleUploader";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,17 +40,16 @@ export default function LoginPage() {
 
   return (
     <>
-      <FileUploader />
       <div className="relative min-h-screen flex items-center justify-center p-4">
         {/* Aurora background - fixed layer behind everything */}
-        <div className="fixed inset-0 -z-10">
+        {/* <div className="fixed inset-0 -z-10">
           <Aurora
             colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
             blend={1.5}
             amplitude={1.2}
             speed={0.7}
           />
-        </div>
+        </div> */}
 
         {/* Content layer */}
         <div className="relative z-10 w-full max-w-md">
