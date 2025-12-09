@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  File: 'File',
   EmailVerificationCode: 'EmailVerificationCode'
 } as const
 
@@ -86,6 +87,20 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const FileScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  fileName: 'fileName',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  bucket: 'bucket',
+  userId: 'userId',
+  uploadedAt: 'uploadedAt'
+} as const
+
+export type FileScalarFieldEnum = (typeof FileScalarFieldEnum)[keyof typeof FileScalarFieldEnum]
 
 
 export const EmailVerificationCodeScalarFieldEnum = {

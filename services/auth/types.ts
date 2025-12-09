@@ -19,7 +19,7 @@ export interface FinalizeSignUpInput {
   displayName: string;
   username: string;
   password: string;
-  code?: string
+  code?: string;
 }
 
 export interface UserLoginInput {

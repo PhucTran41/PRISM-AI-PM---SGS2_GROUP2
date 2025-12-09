@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("NEON_URL")
 }
 
 model User {
@@ -21,8 +20,30 @@ model User {
   githubAuth  Boolean    @default(false)
   githubId    String?    @unique
 
+  files     File[]
+
+  @@map("users")
+
   @@index([email])
   @@index([username])
+}
+
+model File {
+  id         String   @id @default(cuid())
+  key        String   @unique // R2 object key
+  fileName   String   // Original file name
+  fileSize   BigInt   // File size in bytes
+  mimeType   String   // MIME type
+  bucket     String   // R2 bucket name
+  userId     String?  // Optional user ID
+  uploadedAt DateTime @default(now())
+  
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([uploadedAt])
+  @@index([mimeType])
+  @@map("files")
 }
 
 model EmailVerificationCode {

@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.0.1",
   "engineVersion": "f09f2815f091dbba658cdcd2264306d88bb5bda6",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id          String   @id @default(uuid())\n  username    String   @unique\n  displayName String\n  email       String   @unique\n  password    String\n  avatarUrl   String\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n  googleAuth  Boolean  @default(false)\n  githubAuth  Boolean  @default(false)\n  githubId    String?  @unique\n\n  @@index([email])\n  @@index([username])\n}\n\nmodel EmailVerificationCode {\n  id         String   @id @default(uuid())\n  email      String   @unique\n  code       String\n  expires    DateTime\n  verified   Boolean  @default(false)\n  created_at DateTime @default(now())\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id          String   @id @default(uuid())\n  username    String   @unique\n  displayName String\n  email       String   @unique\n  password    String\n  avatarUrl   String\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n  googleAuth  Boolean  @default(false)\n  githubAuth  Boolean  @default(false)\n  githubId    String?  @unique\n\n  files File[]\n\n  @@index([email])\n  @@index([username])\n  @@map(\"users\")\n}\n\nmodel File {\n  id         String   @id @default(cuid())\n  key        String   @unique // R2 object key\n  fileName   String // Original file name\n  fileSize   BigInt // File size in bytes\n  mimeType   String // MIME type\n  bucket     String // R2 bucket name\n  userId     String? // Optional user ID\n  uploadedAt DateTime @default(now())\n\n  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)\n\n  @@index([userId])\n  @@index([uploadedAt])\n  @@index([mimeType])\n  @@map(\"files\")\n}\n\nmodel EmailVerificationCode {\n  id         String   @id @default(uuid())\n  email      String   @unique\n  code       String\n  expires    DateTime\n  verified   Boolean  @default(false)\n  created_at DateTime @default(now())\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"displayName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"googleAuth\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"githubAuth\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"githubId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"EmailVerificationCode\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"code\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"verified\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"displayName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"googleAuth\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"githubAuth\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"githubId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"files\",\"kind\":\"object\",\"type\":\"File\",\"relationName\":\"FileToUser\"}],\"dbName\":\"users\"},\"File\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bucket\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FileToUser\"}],\"dbName\":\"files\"},\"EmailVerificationCode\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"code\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"verified\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -183,6 +183,16 @@ export interface PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.file`: Exposes CRUD operations for the **File** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Files
+    * const files = await prisma.file.findMany()
+    * ```
+    */
+  get file(): Prisma.FileDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
    * `prisma.emailVerificationCode`: Exposes CRUD operations for the **EmailVerificationCode** model.
